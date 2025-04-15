@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Analysis - Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: #1a2332;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a2332 0%, #0d1117 100%);
+            position: relative;
+            background-image: url("{{ url_for('static', filename='images/jake-banasik-jHi8rZ3Q9KE-unsplash.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 35, 50, 0.92) 0%, rgba(13, 17, 23, 0.95) 100%);
+            z-index: 0;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .brand i {
+            display: none;
+        }
+
+        .brand h1 {
+            color: #1a2332;
+            font-size: 28px;
+            line-height: 1.4;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #1a2332;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            color: #387ED1;
+            font-size: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 16px 16px 44px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            color: #1a2332;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            border-color: #387ED1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(56, 126, 209, 0.1);
+            background: #ffffff;
+        }
+
+        input::placeholder {
+            color: #6c757d;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #387ED1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 32px;
+        }
+
+        button:hover {
+            background: #2c6bb1;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(44, 107, 177, 0.2);
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 24px;
+            color: #6c757d;
+            font-size: 15px;
+        }
+
+        .register-link a {
+            color: #387ED1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .register-link a:hover {
+            color: #2c6bb1;
+            text-decoration: underline;
+        }
+
+        .platform-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 32px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .platform-logos a {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 15px;
+            transition: color 0.3s;
+        }
+
+        .platform-logos a:hover {
+            color: #387ED1;
+        }
+
+        .password-requirements {
+            margin-top: 15px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6c757d;
+            border: 1px solid #e0e0e0;
+        }
+
+        .password-requirements h4 {
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #1a2332;
+            font-weight: 500;
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .password-requirements li {
+            margin: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .password-requirements li:before {
+            content: "•";
+            position: absolute;
+            left: 8px;
+            color: #387ED1;
+        }
+
+        .photo-credit {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            z-index: 1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .photo-credit:hover {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+            }
+
+            .brand h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="brand">
+                <i class="fas fa-chart-line"></i>
+                <h1>Create Your Account</h1>
+            </div>
+            <form action="{{ url_for('register') }}" method="POST" id="registerForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               required 
+                               autocomplete="username"
+                               placeholder="Choose a username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               autocomplete="new-password"
+                               placeholder="Create a strong password">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" 
+                               id="confirm-password" 
+                               name="confirm-password" 
+                               required 
+                               autocomplete="new-password"
+                               placeholder="Confirm your password">
+                    </div>
+                </div>
+                <div class="password-requirements">
+                    <h4>Password Requirements</h4>
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>Must contain at least one number</li>
+                        <li>Must contain at least one special character</li>
+                        <li>Must contain uppercase and lowercase letters</li>
+                    </ul>
+                </div>
+                <button type="submit">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+            <div class="register-link">
+                Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Enhanced password validation
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            // Password validation rules
+            const minLength = password.length >= 8;
+            const hasNumber = /\d/.test(password);
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+            const hasUpperLower = /[a-z]/.test(password) && /[A-Z]/.test(password);
+            
+            let errorMessage = [];
+            
+            if (!minLength) errorMessage.push('Password must be at least 8 characters long');
+            if (!hasNumber) errorMessage.push('Password must contain at least one number');
+            if (!hasSpecial) errorMessage.push('Password must contain at least one special character');
+            if (!hasUpperLower) errorMessage.push('Password must contain both uppercase and lowercase letters');
+            if (password !== confirmPassword) errorMessage.push('Passwords do not match');
+            
+            if (errorMessage.length > 0) {
+                e.preventDefault();
+                alert(errorMessage.join('\n'));
+            }
+        });
+    </script>
+</body>
+
+</html>

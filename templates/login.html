@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Analysis - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            scrollbar-width: thin;
+            scrollbar-color: #00ff88 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Webkit scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00cc6f;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        html {
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 20px;
+            background-color: #0a0f1a;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .page-wrapper {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .login-container {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            margin: auto;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 0;
+        }
+
+        .brand svg {
+            width: 44px;
+            height: 44px;
+            margin-bottom: 16px;
+            stroke: #00ff88;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .brand svg:hover {
+            transform: scale(1.05);
+        }
+
+        .brand h1 {
+            color: #ffffff;
+            font-size: 22px;
+            line-height: 1.4;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            color: #00ff88;
+            font-size: 14px;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        input:focus {
+            border-color: #00ff88;
+            outline: none;
+            background: rgba(0, 255, 136, 0.03);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+        }
+
+        input:focus + i {
+            opacity: 1;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            background: #00ff88;
+            color: #0a0f1a;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 28px;
+            letter-spacing: 0.3px;
+        }
+
+        button:hover {
+            background: #00cc6f;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.25);
+        }
+
+        button i {
+            font-size: 14px;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 24px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .register-link a {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 2px 4px;
+            margin-left: 4px;
+            border-radius: 4px;
+        }
+
+        .register-link a:hover {
+            color: #00cc6f;
+            background: rgba(0, 255, 136, 0.1);
+            text-decoration: none;
+        }
+
+        .platform-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 28px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
+        }
+
+        .platform-logos a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            letter-spacing: 0.3px;
+        }
+
+        .platform-logos a:hover {
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.05);
+            transform: translateY(-1px);
+        }
+
+        #stockAnimation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+            
+            .login-card {
+                padding: 28px 24px;
+                border-radius: 20px;
+            }
+
+            .brand h1 {
+                font-size: 20px;
+            }
+
+            .platform-logos {
+                gap: 12px;
+            }
+
+            .platform-logos a {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            body {
+                align-items: flex-start;
+                padding-top: 20px;
+            }
+
+            .login-container {
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="stockAnimation"></canvas>
+    <div class="page-wrapper">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18" />
+                        <path d="M3 12l5-5 4 4 8-8" />
+                        <path d="M14 2h8v8" />
+                        <circle cx="8" cy="16" r="2" />
+                        <circle cx="16" cy="8" r="2" />
+                    </svg>
+                    <h1>Stock Price Prediction <br>With AI/ML</h1>
+                </div>
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                    </div>
+                    <button type="submit">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </button>
+                </form>
+                <div class="register-link">
+                    Don't have an account? <a href="/register">Register here</a>
+                </div>
+                <div class="platform-logos">
+                    <a href="https://zerodha.com" target="_blank">Zerodha</a>
+                    <a href="https://upstox.com" target="_blank">Upstox</a>
+                    <a href="https://angelone.in" target="_blank">Angel One</a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('stockAnimation');
+        const ctx = canvas.getContext('2d');
+        let charts = [];
+        let symbols = [];
+        let trendLines = [];
+        let animationFrameId;
+
+        function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = `${window.innerWidth}px`;
+            canvas.style.height = `${window.innerHeight}px`;
+            ctx.scale(dpr, dpr);
+            initCharts();
+        }
+
+        class TrendLine {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.startX = Math.random() * canvas.width;
+                this.startY = Math.random() * canvas.height;
+                this.length = Math.random() * 200 + 100;
+                this.angle = Math.random() * Math.PI / 4 - Math.PI / 8;
+                this.speed = Math.random() * 0.5 + 0.2;
+                this.alpha = Math.random() * 0.2 + 0.1;
+                this.thickness = Math.random() * 2 + 1;
+                this.isPositive = Math.random() > 0.5;
+            }
+
+            update() {
+                this.startY += this.speed;
+                if (this.startY > canvas.height) {
+                    this.reset();
+                    this.startY = -this.length;
+                }
+            }
+
+            draw() {
+                const endX = this.startX + Math.cos(this.angle) * this.length;
+                const endY = this.startY + Math.sin(this.angle) * this.length;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(${this.isPositive ? '0, 255, 136' : '255, 82, 82'}, ${this.alpha})`;
+                ctx.lineWidth = this.thickness;
+                ctx.moveTo(this.startX, this.startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            }
+        }
+
+        class StockSymbol {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.symbol = ['BTC', 'ETH', 'AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA', 'META', 'NFLX', 'NVDA', 'AMD', 'INTC', 'JPM', 'BAC'][Math.floor(Math.random() * 14)];
+                this.price = (Math.random() * 1000).toFixed(2);
+                this.change = ((Math.random() * 10) - 5).toFixed(2);
+                this.isPositive = parseFloat(this.change) > 0;
+                this.alpha = Math.random() * 0.4 + 0.2;
+                this.size = Math.random() * 14 + 10;
+                this.speed = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.reset();
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+                this.alpha = 0.2 + Math.sin(Date.now() * 0.001 + this.x) * 0.2;
+            }
+
+            draw() {
+                ctx.font = `${this.size}px Inter`;
+                ctx.fillStyle = `rgba(${this.isPositive ? '0, 255, 136' : '255, 82, 82'}, ${this.alpha})`;
+                ctx.fillText(`${this.symbol} ${this.price} ${this.isPositive ? '+' : ''}${this.change}%`, this.x, this.y);
+            }
+        }
+
+        class MiniChart {
+            constructor() {
+                this.reset();
+                this.generateData();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.width = Math.random() * 100 + 50;
+                this.height = Math.random() * 60 + 30;
+                this.alpha = Math.random() * 0.3 + 0.1;
+                this.speed = Math.random() * 0.3 + 0.1;
+            }
+
+            generateData() {
+                this.data = [];
+                let price = 100;
+                for (let i = 0; i < 20; i++) {
+                    const open = price;
+                    price += (Math.random() - 0.5) * 10;
+                    const close = price;
+                    const high = Math.max(open, close) + Math.random() * 5;
+                    const low = Math.min(open, close) - Math.random() * 5;
+                    this.data.push({ open, close, high, low });
+                }
+            }
+
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.reset();
+                    this.y = -this.height;
+                    this.generateData();
+                }
+                this.alpha = 0.1 + Math.sin(Date.now() * 0.001 + this.x) * 0.1;
+            }
+
+            draw() {
+                const candleWidth = this.width / this.data.length;
+                const max = Math.max(...this.data.map(d => d.high));
+                const min = Math.min(...this.data.map(d => d.low));
+                const range = max - min;
+                const scaleY = this.height / range;
+
+                this.data.forEach((candle, i) => {
+                    const x = this.x + i * candleWidth;
+                    const isGreen = candle.close > candle.open;
+                    
+                    // Draw wick
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(${isGreen ? '0, 255, 136' : '255, 82, 82'}, ${this.alpha})`;
+                    ctx.moveTo(x + candleWidth / 2, this.y + (max - candle.high) * scaleY);
+                    ctx.lineTo(x + candleWidth / 2, this.y + (max - candle.low) * scaleY);
+                    ctx.stroke();
+
+                    // Draw candle body
+                    const bodyHeight = Math.max(1, Math.abs(candle.open - candle.close) * scaleY);
+                    const bodyY = this.y + (max - Math.max(candle.open, candle.close)) * scaleY;
+                    ctx.fillStyle = `rgba(${isGreen ? '0, 255, 136' : '255, 82, 82'}, ${this.alpha})`;
+                    ctx.fillRect(x, bodyY, candleWidth - 1, bodyHeight);
+                });
+            }
+        }
+
+        function initCharts() {
+            charts = [];
+            symbols = [];
+            trendLines = [];
+            
+            // Increase the number of elements
+            const chartCount = Math.min(Math.floor(canvas.width / 150), 12);
+            const symbolCount = Math.min(Math.floor(canvas.width / 80), 20);
+            const trendLineCount = Math.min(Math.floor(canvas.width / 50), 30);
+
+            for (let i = 0; i < chartCount; i++) {
+                charts.push(new MiniChart());
+            }
+
+            for (let i = 0; i < symbolCount; i++) {
+                symbols.push(new StockSymbol());
+            }
+
+            for (let i = 0; i < trendLineCount; i++) {
+                trendLines.push(new TrendLine());
+            }
+        }
+
+        function createGradientBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0a0f1a');
+            gradient.addColorStop(1, '#1a2332');
+            return gradient;
+        }
+
+        function drawGrid() {
+            const gridSize = 40; // Smaller grid size
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.03)';
+            ctx.lineWidth = 1;
+
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = createGradientBackground();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawGrid();
+
+            // Draw trend lines first (background layer)
+            trendLines.forEach(line => {
+                line.update();
+                line.draw();
+            });
+
+            // Draw charts (middle layer)
+            charts.forEach(chart => {
+                chart.update();
+                chart.draw();
+            });
+
+            // Draw symbols (top layer)
+            symbols.forEach(symbol => {
+                symbol.update();
+                symbol.draw();
+            });
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Initialize
+        resizeCanvas();
+        window.addEventListener('resize', () => {
+            cancelAnimationFrame(animationFrameId);
+            resizeCanvas();
+            animate();
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+
+</html>

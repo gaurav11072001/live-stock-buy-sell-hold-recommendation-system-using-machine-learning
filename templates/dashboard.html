@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Stock Market</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/luxon@2.3.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.1.0/dist/chartjs-adapter-luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <style>
+        .broker-logos {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-left: auto;
+            padding-right: 20px;
+        }
+        .broker-logos img {
+            height: 30px;
+            width: auto;
+        }
+        .broker-logos a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: inherit;
+        }
+        .broker-logos a:hover {
+            opacity: 0.8;
+        }
+        .trading-platforms-modal .platform-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .trading-platforms-modal .platform-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trading-platforms-modal .platform-logo {
+            height: 30px;
+            width: auto;
+        }
+
+        .trading-platforms-modal .platform-features {
+            margin: 15px 0;
+        }
+
+        .trading-platforms-modal .platform-features li {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .trading-platforms-modal .platform-features li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #387ED1;
+        }
+
+        .trading-platforms-modal .platform-cta {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #387ED1;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .trading-platforms-modal .platform-cta:hover {
+            background: #2c6bb1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <header>
+            <div class="logo-section">
+                <i class="fas fa-chart-line"></i>
+                <h1>Stock Market Dashboard</h1>
+            </div>
+            <div class="broker-logos">
+                <a href="https://zerodha.com" target="_blank" title="Trade on Zerodha">
+                    <img src="{{ url_for('static', filename='images/zerodha-logo.svg') }}" alt="Zerodha">
+                </a>
+                <a href="https://upstox.com" target="_blank" title="Trade on Upstox">
+                    <img src="{{ url_for('static', filename='images/upstox-logo.svg') }}" alt="Upstox">
+                </a>
+                <a href="https://angelone.in" target="_blank" title="Trade on Angel One">
+                    <img src="{{ url_for('static', filename='images/angel-one-logo.svg') }}" alt="Angel One">
+                </a>
+            </div>
+            <nav>
+                <div class="nav-controls">
+                    <button id="trading-platforms-btn" class="nav-btn">
+                        <i class="fas fa-exchange-alt"></i>
+                        Trading Platforms
+                    </button>
+                    <button id="faq-btn" class="nav-btn">
+                        <i class="fas fa-question-circle"></i>
+                        FAQ
+                    </button>
+                    <div class="user-info">
+                        <span>Welcome, {{ session.username }}</span>
+                        <a href="{{ url_for('logout') }}" class="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <main>
+            <section class="stock-info">
+                <div class="section-header">
+                    <h2>Market Overview</h2>
+                    <div class="controls">
+                        <div class="dropdown">
+                            <select id="stock-select" class="custom-select">
+                                <option value="" disabled selected>Select Stock</option>
+                                <option value="TATASTEEL.NS">Tata Steel</option>
+                                <option value="HDFCBANK.NS">HDFC Bank</option>
+                                <option value="WIPRO.NS">Wipro</option>
+                                <option value="TCS.NS">TCS</option>
+                                <option value="INFY.NS">Infosys</option>
+                            </select>
+                        </div>
+                        <div class="refresh-control">
+                            <button id="refresh-btn" onclick="loadCharts()">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="stock-container">
+                    {% for stock in ['TATASTEEL.NS', 'HDFCBANK.NS', 'WIPRO.NS', 'TCS.NS', 'INFY.NS'] %}
+                    <div class="stock-card" id="stock-{{ stock }}" style="display: none;">
+                        <div class="stock-header">
+                            <div class="stock-title">
+                                <h3>{{ stock }}</h3>
+                                <span class="timestamp"><i class="fas fa-circle"></i> Live</span>
+                            </div>
+                            <div class="stock-price-info">
+                                <div id="live-price-{{ stock }}" class="current-price">--</div>
+                                <div id="price-change-{{ stock }}" class="price-change">--</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chart-{{ stock }}"></canvas>
+                        </div>
+                        <div class="prediction-container">
+                            <div class="prediction-header">
+                                <h4>XGBoost AI Predictions</h4>
+                                <span class="prediction-timestamp">
+                                    <i class="fas fa-circle"></i> Live
+                                </span>
+                            </div>
+                            <div class="prediction-content" id="prediction-{{ stock }}">
+                                <div class="prediction-signal">
+                                    <div class="signal-indicator">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="signal-details">
+                                        <span class="signal-label">XGBoost Signal</span>
+                                        <span class="signal-value">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="prediction-metrics">
+                                    <div class="metric confidence" data-tooltip="XGBoost model confidence level">
+                                        <span class="metric-label">Model Confidence</span>
+                                        <span class="metric-value">--</span>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill"></div>
+                                        </div>
+                                    </div>
+                                    <div class="metric next-prediction" data-tooltip="Predicted price for next trading day">
+                                        <span class="metric-label">Next Day Prediction</span>
+                                        <span class="metric-value">--</span>
+                                    </div>
+                                </div>
+                                <div class="prediction-rules">
+                                    <small>
+                                        XGBoost Signal Rules:
+                                        <ul>
+                                            <li>Strong Buy/Sell: Confidence ≥ 65%</li>
+                                            <li>Buy/Sell: Confidence < 65%</li>
+                                            <li>Based on: Price, Volume, % Change</li>
+                                        </ul>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="market-summary">
+                    <div class="summary-card">
+                        <i class="fas fa-arrow-trend-up"></i>
+                        <div class="summary-content">
+                            <span class="summary-label">Top Gainer</span>
+                            <span class="summary-value" id="top-gainer">--</span>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <i class="fas fa-arrow-trend-down"></i>
+                        <div class="summary-content">
+                            <span class="summary-label">Top Loser</span>
+                            <span class="summary-value" id="top-loser">--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Add FAQ Modal -->
+    <div id="faq-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Stock Market Trading Guide</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="faq-section">
+                    <h3>Basic Concepts</h3>
+                    <div class="faq-item">
+                        <h4>What is a Stock?</h4>
+                        <p>A stock represents ownership in a company. When you buy a stock, you're purchasing a small piece of that company, making you a shareholder. As the company grows and profits, your stock value may increase.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>What is Stock Trading?</h4>
+                        <p>Stock trading involves buying and selling shares of companies in financial markets. There are two main approaches:</p>
+                        <ul>
+                            <li><strong>Day Trading:</strong> Buying and selling stocks within the same day</li>
+                            <li><strong>Long-term Investment:</strong> Holding stocks for extended periods</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Stock Market Terms</h4>
+                        <ul>
+                            <li><strong>Bull Market:</strong> Market is rising or expected to rise</li>
+                            <li><strong>Bear Market:</strong> Market is falling or expected to fall</li>
+                            <li><strong>Volume:</strong> Number of shares traded</li>
+                            <li><strong>Market Cap:</strong> Total value of a company's shares</li>
+                            <li><strong>Dividend:</strong> Portion of profits paid to shareholders</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="faq-section">
+                    <h3>Reading the Dashboard</h3>
+                    <div class="faq-item">
+                        <h4>Candlestick Charts</h4>
+                        <p>Candlestick charts show price movements:</p>
+                        <ul>
+                            <li><strong>Green Candle:</strong> Price increased (Close > Open)</li>
+                            <li><strong>Red Candle:</strong> Price decreased (Close < Open)</li>
+                            <li><strong>Upper Wick:</strong> Highest price during period</li>
+                            <li><strong>Lower Wick:</strong> Lowest price during period</li>
+                            <li><strong>Body:</strong> Opening and closing prices</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Trading Signals Explained</h4>
+                        <p>Our AI analyzes multiple factors to generate signals:</p>
+                        <ul>
+                            <li><span class="signal-buy">Strong Buy (≥65% confidence):</span> High probability of price increase</li>
+                            <li><span class="signal-buy-weak">Buy (55-64% confidence):</span> Moderate probability of increase</li>
+                            <li><span class="signal-hold">Hold (31-54% confidence):</span> Market uncertainty</li>
+                            <li><span class="signal-sell">Sell (≤30% confidence):</span> Potential price decrease</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Understanding Price Movements</h3>
+                    <div class="faq-item">
+                        <h4>What Affects Stock Prices?</h4>
+                        <ul>
+                            <li>Company Performance and Earnings</li>
+                            <li>Industry Trends</li>
+                            <li>Economic Conditions</li>
+                            <li>Market Sentiment</li>
+                            <li>News and Events</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Technical Indicators</h4>
+                        <p>Common indicators used in analysis:</p>
+                        <ul>
+                            <li><strong>Moving Averages:</strong> Show trend direction</li>
+                            <li><strong>Volume:</strong> Trading activity intensity</li>
+                            <li><strong>RSI:</strong> Overbought/oversold conditions</li>
+                            <li><strong>MACD:</strong> Momentum and trend changes</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Trading Tips & Risk Management</h3>
+                    <div class="faq-item">
+                        <h4>Essential Trading Rules</h4>
+                        <ul>
+                            <li>Never invest more than you can afford to lose</li>
+                            <li>Diversify your investments</li>
+                            <li>Use stop-loss orders to limit losses</li>
+                            <li>Don't trade based on emotions</li>
+                            <li>Keep records of your trades</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Research Methods</h4>
+                        <p>Before investing, analyze:</p>
+                        <ul>
+                            <li>Company Financial Statements</li>
+                            <li>Industry Competition</li>
+                            <li>Management Team</li>
+                            <li>Market Position</li>
+                            <li>Future Growth Prospects</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>AI Predictions & Analysis</h3>
+                    <div class="faq-item">
+                        <h4>Understanding Confidence Levels</h4>
+                        <p>Our AI system considers multiple factors:</p>
+                        <ul>
+                            <li>Historical Price Patterns</li>
+                            <li>Market Volatility</li>
+                            <li>Trading Volume</li>
+                            <li>Technical Indicators</li>
+                            <li>Market Sentiment</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Using Predictions Wisely</h4>
+                        <ul>
+                            <li>Combine AI signals with your own research</li>
+                            <li>Consider market conditions</li>
+                            <li>Monitor prediction accuracy over time</li>
+                            <li>Use stop-loss orders regardless of predictions</li>
+                            <li>Don't rely solely on automated signals</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Additional Resources</h3>
+                    <div class="faq-item">
+                        <h4>Learning Materials</h4>
+                        <ul>
+                            <li>Financial News Websites</li>
+                            <li>Stock Market Books</li>
+                            <li>Trading Courses</li>
+                            <li>Market Analysis Tools</li>
+                            <li>Trading Communities</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Important Disclaimers</h4>
+                        <p>Remember:</p>
+                        <ul>
+                            <li>Past performance doesn't guarantee future results</li>
+                            <li>All trading carries risk</li>
+                            <li>AI predictions are tools, not guarantees</li>
+                            <li>Always do your own research</li>
+                            <li>Consider consulting financial advisors</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Add more sections to the FAQ Modal -->
+                <div class="faq-section">
+                    <h3>Advanced Trading Concepts</h3>
+                    <div class="faq-item">
+                        <h4>Types of Trading Orders</h4>
+                        <ul>
+                            <li><strong>Market Order:</strong> Buy/sell immediately at current market price</li>
+                            <li><strong>Limit Order:</strong> Buy/sell only at specified price or better</li>
+                            <li><strong>Stop Order:</strong> Becomes market order when price reaches specified level</li>
+                            <li><strong>Stop-Limit Order:</strong> Combines features of stop and limit orders</li>
+                            <li><strong>Trailing Stop:</strong> Stop price that follows market price at specified distance</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Trading Strategies</h4>
+                        <ul>
+                            <li><strong>Trend Following:</strong> Trading in direction of established trend</li>
+                            <li><strong>Mean Reversion:</strong> Betting on price return to historical average</li>
+                            <li><strong>Momentum Trading:</strong> Buying rising and selling falling stocks</li>
+                            <li><strong>Swing Trading:</strong> Capturing gains over days to weeks</li>
+                            <li><strong>Position Trading:</strong> Long-term holding based on fundamental analysis</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Market Analysis Methods</h3>
+                    <div class="faq-item">
+                        <h4>Fundamental Analysis</h4>
+                        <p>Evaluating a company's intrinsic value through:</p>
+                        <ul>
+                            <li><strong>Financial Ratios:</strong>
+                                <ul>
+                                    <li>P/E Ratio (Price to Earnings)</li>
+                                    <li>P/B Ratio (Price to Book)</li>
+                                    <li>Debt to Equity Ratio</li>
+                                    <li>Return on Equity (ROE)</li>
+                                    <li>Earnings Per Share (EPS)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Financial Statements:</strong>
+                                <ul>
+                                    <li>Balance Sheet</li>
+                                    <li>Income Statement</li>
+                                    <li>Cash Flow Statement</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Technical Analysis</h4>
+                        <p>Popular technical indicators and patterns:</p>
+                        <ul>
+                            <li><strong>Trend Indicators:</strong>
+                                <ul>
+                                    <li>Moving Averages (SMA, EMA)</li>
+                                    <li>MACD (Moving Average Convergence Divergence)</li>
+                                    <li>Trend Lines</li>
+                                </ul>
+                            </li>
+                            <li><strong>Momentum Indicators:</strong>
+                                <ul>
+                                    <li>RSI (Relative Strength Index)</li>
+                                    <li>Stochastic Oscillator</li>
+                                    <li>Williams %R</li>
+                                </ul>
+                            </li>
+                            <li><strong>Chart Patterns:</strong>
+                                <ul>
+                                    <li>Head and Shoulders</li>
+                                    <li>Double Tops/Bottoms</li>
+                                    <li>Triangle Patterns</li>
+                                    <li>Flag Patterns</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Risk Management Strategies</h3>
+                    <div class="faq-item">
+                        <h4>Position Sizing</h4>
+                        <ul>
+                            <li><strong>2% Rule:</strong> Never risk more than 2% of portfolio on single trade</li>
+                            <li><strong>Equal Position Sizing:</strong> Dividing portfolio equally among positions</li>
+                            <li><strong>Kelly Criterion:</strong> Mathematical formula for optimal position size</li>
+                            <li><strong>Fixed-Dollar Risk:</strong> Risking same amount on each trade</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Portfolio Diversification</h4>
+                        <ul>
+                            <li><strong>Sector Diversification:</strong> Spreading investments across different industries</li>
+                            <li><strong>Market Cap Diversification:</strong> Mix of large, mid, and small-cap stocks</li>
+                            <li><strong>Geographic Diversification:</strong> Investing in different regions/countries</li>
+                            <li><strong>Asset Class Diversification:</strong> Mix of stocks, bonds, commodities, etc.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Market Psychology</h3>
+                    <div class="faq-item">
+                        <h4>Common Trading Biases</h4>
+                        <ul>
+                            <li><strong>Confirmation Bias:</strong> Seeking information that confirms existing beliefs</li>
+                            <li><strong>Loss Aversion:</strong> Feeling losses more strongly than equivalent gains</li>
+                            <li><strong>FOMO:</strong> Fear of missing out on potential gains</li>
+                            <li><strong>Anchoring:</strong> Over-relying on first piece of information received</li>
+                            <li><strong>Recency Bias:</strong> Giving too much weight to recent events</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Emotional Control</h4>
+                        <ul>
+                            <li><strong>Trading Journal:</strong> Keep detailed records of trades and emotions</li>
+                            <li><strong>Trading Plan:</strong> Develop and stick to predetermined rules</li>
+                            <li><strong>Risk Management:</strong> Use stop-losses to limit emotional decisions</li>
+                            <li><strong>Regular Review:</strong> Analyze performance objectively</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Advanced Market Concepts</h3>
+                    <div class="faq-item">
+                        <h4>Market Indicators</h4>
+                        <ul>
+                            <li><strong>VIX (Fear Index):</strong> Measures market volatility expectations</li>
+                            <li><strong>Put-Call Ratio:</strong> Indicates market sentiment</li>
+                            <li><strong>Market Breadth:</strong> Advance-decline ratio, new highs vs. lows</li>
+                            <li><strong>Volume Analysis:</strong> Trading volume patterns and implications</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Economic Indicators</h4>
+                        <ul>
+                            <li><strong>GDP Growth:</strong> Overall economic health</li>
+                            <li><strong>Inflation Rates:</strong> Price level changes</li>
+                            <li><strong>Employment Data:</strong> Job market conditions</li>
+                            <li><strong>Interest Rates:</strong> Monetary policy impact</li>
+                            <li><strong>Corporate Earnings:</strong> Company performance metrics</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Trading Tools and Technology</h3>
+                    <div class="faq-item">
+                        <h4>Essential Trading Tools</h4>
+                        <ul>
+                            <li><strong>Charting Platforms:</strong> Technical analysis software</li>
+                            <li><strong>Stock Screeners:</strong> Filter stocks based on criteria</li>
+                            <li><strong>News Aggregators:</strong> Real-time market news</li>
+                            <li><strong>Portfolio Trackers:</strong> Monitor investments</li>
+                            <li><strong>Trading Journals:</strong> Record and analyze trades</li>
+                        </ul>
+                    </div>
+                    <div class="faq-item">
+                        <h4>AI and Algorithmic Trading</h4>
+                        <ul>
+                            <li><strong>Machine Learning:</strong> Pattern recognition in market data</li>
+                            <li><strong>Automated Trading:</strong> Algorithm-based execution</li>
+                            <li><strong>Risk Analysis:</strong> AI-powered risk assessment</li>
+                            <li><strong>Market Sentiment:</strong> Social media and news analysis</li>
+                            <li><strong>Backtesting:</strong> Testing strategies on historical data</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>AI Model Information</h3>
+                    <div class="faq-item">
+                        <h4>About XGBoost Model</h4>
+                        <p>Our trading signals are generated using XGBoost (eXtreme Gradient Boosting), a powerful machine learning algorithm known for its accuracy in financial predictions.</p>
+                        <ul>
+                            <li><strong>Features Used:</strong>
+                                <ul>
+                                    <li>Previous Close Price</li>
+                                    <li>Trading Volume</li>
+                                    <li>Price Percentage Change</li>
+                                </ul>
+                            </li>
+                            <li><strong>Signal Interpretation:</strong>
+                                <ul>
+                                    <li>Strong Buy: High confidence predictions (>75%)</li>
+                                    <li>Strong Sell: Low confidence predictions (<30%)</li>
+                                    <li>Hold: Moderate confidence (30-75%)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Trading Platforms Modal -->
+    <div id="trading-platforms-modal" class="modal trading-platforms-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Trading Platforms</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="platform-card">
+                    <h3>
+                        <img src="{{ url_for('static', filename='images/zerodha-logo.svg') }}" alt="Zerodha" class="platform-logo">
+                        Zerodha
+                    </h3>
+                    <p>India's largest stock broker offering the lowest, most competitive brokerage rates in the industry.</p>
+                    <ul class="platform-features">
+                        <li>Zero brokerage on equity delivery trades</li>
+                        <li>Powerful trading platforms - Kite & Console</li>
+                        <li>Advanced charting and technical analysis tools</li>
+                        <li>Extensive educational resources through Varsity</li>
+                        <li>Robust API for algorithmic trading</li>
+                    </ul>
+                    <a href="https://zerodha.com/open-account" target="_blank" class="platform-cta">Open Account</a>
+                </div>
+
+                <div class="platform-card">
+                    <h3>
+                        <img src="{{ url_for('static', filename='images/upstox-logo.svg') }}" alt="Upstox" class="platform-logo">
+                        Upstox
+                    </h3>
+                    <p>A new-age online trading platform backed by Ratan Tata, offering a seamless trading experience.</p>
+                    <ul class="platform-features">
+                        <li>Commission-free equity delivery trading</li>
+                        <li>User-friendly mobile and web platforms</li>
+                        <li>Advanced charts and research tools</li>
+                        <li>Integrated with multiple bank accounts</li>
+                        <li>Real-time market data and news</li>
+                    </ul>
+                    <a href="https://upstox.com/open-account" target="_blank" class="platform-cta">Open Account</a>
+                </div>
+
+                <div class="platform-card">
+                    <h3>
+                        <img src="{{ url_for('static', filename='images/angel-one-logo.svg') }}" alt="Angel One" class="platform-logo">
+                        Angel One
+                    </h3>
+                    <p>One of India's leading retail broking houses with cutting-edge technology and innovative trading solutions.</p>
+                    <ul class="platform-features">
+                        <li>Smart API for algo trading</li>
+                        <li>Advanced trading platform with SmartAPI</li>
+                        <li>Comprehensive research reports</li>
+                        <li>Dedicated relationship manager</li>
+                        <li>Investment advisory services</li>
+                    </ul>
+                    <a href="https://angelone.in/open-account" target="_blank" class="platform-cta">Open Account</a>
+                </div>
+
+                <div class="platform-card">
+                    <h3>
+                        <img src="{{ url_for('static', filename='images/groww-logo.svg') }}" alt="Groww" class="platform-logo">
+                        Groww
+                    </h3>
+                    <p>Modern investment platform making investing simple and accessible to everyone in India.</p>
+                    <ul class="platform-features">
+                        <li>Zero account opening fee</li>
+                        <li>Intuitive and easy-to-use interface</li>
+                        <li>Paperless account opening</li>
+                        <li>Comprehensive learning resources</li>
+                        <li>Multi-asset investment platform</li>
+                    </ul>
+                    <a href="https://groww.in/open-account" target="_blank" class="platform-cta">Open Account</a>
+                </div>
+
+                <div class="platform-card">
+                    <h3>
+                        <img src="{{ url_for('static', filename='images/icici-direct-logo.svg') }}" alt="ICICI Direct" class="platform-logo">
+                        ICICI Direct
+                    </h3>
+                    <p>A trusted name in Indian financial services offering a comprehensive suite of investment products.</p>
+                    <ul class="platform-features">
+                        <li>3-in-1 account integration</li>
+                        <li>Research-backed recommendations</li>
+                        <li>Portfolio analysis tools</li>
+                        <li>Expert research reports</li>
+                        <li>Multiple trading platforms</li>
+                    </ul>
+                    <a href="https://secure.icicidirect.com/accountopening" target="_blank" class="platform-cta">Open Account</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Stock data fetching functions
+        async function fetchStockData() {
+            try {
+                const response = await fetch('/api/stocks');
+                const data = await response.json();
+
+                // Update the charts and predictions with the new data
+                Object.keys(data).forEach(stock => {
+                    const stockData = data[stock];
+                    if (stockData.error) {
+                        console.error(`Error fetching data for ${stock}: ${stockData.error}`);
+                        return;
+                    }
+
+                    // Update the chart
+                    const ctx = document.getElementById(`chart-${stock}`).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: stockData.data.map(record => record.Datetime),
+                            datasets: [{
+                                label: stock,
+                                data: stockData.data.map(record => record.Close),
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: { beginAtZero: true },
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+
+                    // Update the prediction element
+                    const predictionElem = document.getElementById(`prediction-${stock}`);
+                    predictionElem.innerHTML = `Buy Signal: ${stockData.buy ? 'Yes' : 'No'}<br>Future Predictions:<ul>${stockData.future_predictions.map(pred => `<li>${pred.date}: ${pred.predicted_close}</li>`).join('')}</ul>`;
+                });
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+            }
+        }
+
+        // Fetch stock data every 10 seconds
+        setInterval(fetchStockData, 10000);
+
+        // Initial data fetch
+        fetchStockData();
+
+        function showStock(stock) {
+            if (!stock) return;
+
+            // Hide all stock cards
+            document.querySelectorAll('.stock-card').forEach(card => {
+                card.style.display = 'none';
+            });
+
+            // Show the selected stock card
+            const selectedCard = document.getElementById(`stock-${stock}`);
+            if (selectedCard) {
+                selectedCard.style.display = 'block';
+            }
+        }
+
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Trading Platforms Modal
+            const tradingPlatformsModal = document.getElementById('trading-platforms-modal');
+            const tradingPlatformsBtn = document.getElementById('trading-platforms-btn');
+            const tradingPlatformsCloseBtn = tradingPlatformsModal.querySelector('.close-btn');
+
+            // FAQ Modal
+            const faqModal = document.getElementById('faq-modal');
+            const faqBtn = document.getElementById('faq-btn');
+            const faqCloseBtn = faqModal.querySelector('.close-btn');
+
+            // Trading Platforms Modal handlers
+            tradingPlatformsBtn.addEventListener('click', function() {
+                tradingPlatformsModal.style.display = 'block';
+            });
+
+            tradingPlatformsCloseBtn.addEventListener('click', function() {
+                tradingPlatformsModal.style.display = 'none';
+            });
+
+            // FAQ Modal handlers
+            faqBtn.addEventListener('click', function() {
+                faqModal.style.display = 'block';
+            });
+
+            faqCloseBtn.addEventListener('click', function() {
+                faqModal.style.display = 'none';
+            });
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === tradingPlatformsModal) {
+                    tradingPlatformsModal.style.display = 'none';
+                }
+                if (event.target === faqModal) {
+                    faqModal.style.display = 'none';
+                }
+            });
+
+            // Add CSS to modals for proper display
+            const style = document.createElement('style');
+            style.textContent = `
+                .modal {
+                    display: none;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.7);
+                    z-index: 1000;
+                    overflow-y: auto;
+                    padding: 20px;
+                }
+                .modal-content {
+                    background-color: #ffffff;
+                    margin: 5% auto;
+                    padding: 30px;
+                    border: none;
+                    width: 90%;
+                    max-width: 1000px;
+                    border-radius: 12px;
+                    position: relative;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                }
+                .close-btn {
+                    position: absolute;
+                    right: 25px;
+                    top: 20px;
+                    font-size: 32px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    border: none;
+                    background: none;
+                    color: #666;
+                    transition: color 0.3s;
+                    padding: 5px 10px;
+                    line-height: 1;
+                }
+                .close-btn:hover {
+                    color: #333;
+                }
+                .modal-header {
+                    margin: -30px -30px 20px -30px;
+                    padding: 20px 30px;
+                    background-color: #f8f9fa;
+                    border-bottom: 1px solid #eee;
+                    border-radius: 12px 12px 0 0;
+                }
+                .modal-header h2 {
+                    font-size: 24px;
+                    color: #333;
+                    margin: 0;
+                }
+                .modal-body {
+                    padding: 20px 0;
+                }
+                .platform-card {
+                    background-color: #fff;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 10px;
+                    padding: 25px;
+                    margin-bottom: 25px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .platform-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+                .platform-card h3 {
+                    font-size: 22px;
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+                .platform-card p {
+                    color: #555;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    margin-bottom: 20px;
+                }
+                .platform-features {
+                    margin: 20px 0;
+                    padding-left: 0;
+                    list-style: none;
+                }
+                .platform-features li {
+                    margin: 12px 0;
+                    padding-left: 25px;
+                    position: relative;
+                    color: #444;
+                    font-size: 15px;
+                    line-height: 1.5;
+                }
+                .platform-features li:before {
+                    content: "•";
+                    position: absolute;
+                    left: 0;
+                    color: #387ED1;
+                    font-size: 20px;
+                    line-height: 1;
+                }
+                .platform-cta {
+                    display: inline-block;
+                    padding: 12px 25px;
+                    background: #387ED1;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    margin-top: 15px;
+                    transition: all 0.3s;
+                    font-weight: 500;
+                    font-size: 16px;
+                }
+                .platform-cta:hover {
+                    background: #2c6bb1;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                }
+                @media (max-width: 768px) {
+                    .modal-content {
+                        width: 95%;
+                        margin: 10% auto;
+                        padding: 20px;
+                    }
+                    .modal-header {
+                        margin: -20px -20px 15px -20px;
+                        padding: 15px 20px;
+                    }
+                    .platform-card {
+                        padding: 20px;
+                    }
+                    .platform-card h3 {
+                        font-size: 20px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

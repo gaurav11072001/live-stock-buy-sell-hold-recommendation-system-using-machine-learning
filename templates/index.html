@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Stock Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+  <style>
+    .chart-container {
+      width: 80%;
+      margin: auto;
+    }
+
+    .stock-section {
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Stock Dashboard</h1>
+  <div class="chart-container">
+    <div class="stock-section">
+      <h2>RELIANCE.NS</h2>
+      <canvas id="chart-RELIANCE.NS"></canvas>
+      <div id="prediction-RELIANCE.NS"></div>
+    </div>
+    <div class="stock-section">
+      <h2>TCS.NS</h2>
+      <canvas id="chart-TCS.NS"></canvas>
+      <div id="prediction-TCS.NS"></div>
+    </div>
+    <div class="stock-section">
+      <h2>HDFCBANK.NS</h2>
+      <canvas id="chart-HDFCBANK.NS"></canvas>
+      <div id="prediction-HDFCBANK.NS"></div>
+    </div>
+    <div class="stock-section">
+      <h2>INFY.NS</h2>
+      <canvas id="chart-INFY.NS"></canvas>
+      <div id="prediction-INFY.NS"></div>
+    </div>
+  </div>
+  <script>
+    const charts = {};
+    const predictionElements = {
+      'RELIANCE.NS': document.getElementById('prediction-RELIANCE.NS'),
+      'TCS.NS': document.getElementById('prediction-TCS.NS'),
+      'HDFCBANK.NS': document.getElementById('prediction-HDFCBANK.NS'),
+      'INFY.NS': document.getElementById('prediction-INFY.NS')
+    };
+
+    async function fetchStockData(symbol) {
+      try {
+        const response = await fetch(`/stock-data/${symbol}`);
+        const data = await response.json();
+        if (data.error) {
+          console.error(`Error fetching data for ${symbol}: ${data.error}`);
+          return [];
+        }
+        return data;
+      } catch (error) {
+        console.error(`Fetch error for ${symbol}:`, error);
+        return [];
+      }
+    }
+
+    async function fetchPrediction(symbol) {
+      try {
+        const response = await fetch(`/predict/${symbol}`);
+        const data = await response.json();
+        if (data.error) {
+          console.error(`Error fetching prediction for ${symbol}: ${data.error}`);
+          return { buy: false, future_predictions: [] };
+        }
+        return data;
+      } catch (error) {
+        console.error(`Fetch error for ${symbol}:`, error);
+        return { buy: false, future_predictions: [] };
+      }
+    }
+
+    function createChart(ctx, labels, data, stockName) {
+      if (charts[stockName]) {
+        charts[stockName].data.labels = labels;
+        charts[stockName].data.datasets[0].data = data;
+        charts[stockName].update();
+      } else {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(255, 159, 64, 0.2)');
+        gradient.addColorStop(1, 'rgba(255, 159, 64, 0)');
+
+        charts[stockName] = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `${stockName} Stock Price (INR)`,
+              data: data,
+              borderColor: 'rgba(255, 159, 64, 1)',
+              backgroundColor: gradient,
+              borderWidth: 2,
+              pointRadius: 1,
+              pointHoverRadius: 5,
+              pointBackgroundColor: 'rgba(54, 162, 235, 0.6)',
+              pointBorderColor: 'rgba(54, 162, 235, 0.6)',
+              pointHoverBackgroundColor: 'rgba(255, 159, 64, 1)',
+              pointHoverBorderColor: 'rgba(255, 159, 64, 1)',
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  color: '#333',
+                  font: {
+                    size: 14
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (tooltipItem) {
+                    return `${tooltipItem.dataset.label}: ₹${tooltipItem.raw.toFixed(2)}`;
+                  }
+                }
+              },
+              annotation: {
+                annotations: {
+                  high: {
+                    type: 'line',
+                    yMin: Math.max(...data),
+                    yMax: Math.max(...data),
+                    borderColor: 'rgb(75, 192, 192)',
+                    borderWidth: 2,
+                    label: {
+                      content: 'Highest Price',
+                      enabled: true,
+                      position: 'end'
+                    }
+                  },
+                  low: {
+                    type: 'line',
+                    yMin: Math.min(...data),
+                    yMax: Math.min(...data),
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 2,
+                    label: {
+                      content: 'Lowest Price',
+                      enabled: true,
+                      position: 'start'
+                    }
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  autoSkip: true,
+                  maxTicksLimit: 10
+                },
+                title: {
+                  display: true,
+                  text: 'Time',
+                  color: '#333',
+                  font: {
+                    size: 14
+                  }
+                },
+                grid: {
+                  display: false
+                }
+              },
+              y: {
+                ticks: {
+                  callback: function (value) {
+                    return `₹${value.toFixed(2)}`;
+                  }
+                },
+                title: {
+                  display: true,
+                  text: 'Price (INR)',
+                  color: '#333',
+                  font: {
+                    size: 14
+                  }
+                },
+                grid: {
+                  borderDash: [5, 5]
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    async function loadCharts() {
+      const stocks = [
+        'RELIANCE.NS',
+        'TCS.NS',
+        'HDFCBANK.NS',
+        'INFY.NS'
+      ];
+
+      for (const stock of stocks) {
+        const data = await fetchStockData(stock);
+        if (data.length) {
+          const labels = data.map(entry => new Date(entry['Datetime']).toLocaleTimeString());
+          const prices = data.map(entry => entry['Close']);
+          const ctx = document.getElementById(`chart-${stock}`).getContext('2d');
+          createChart(ctx, labels, prices, stock);
+
+          const predictionData = await fetchPrediction(stock);
+          const buy = predictionData.buy;
+          const futurePrediction = predictionData.future_predictions[0] || {};
+          const futurePrice = futurePrediction.predicted_close || 'N/A';
+          const futureDate = futurePrediction.date || 'N/A';
+
+          predictionElements[stock].innerHTML = `
+                        <div style="color: ${buy ? 'green' : 'red'};">
+                            <p>${buy ? 'Recommended to Buy' : 'Not Recommended to Buy'}</p>
+                            <p>Next Minute Prediction:</p>
+                            <p>Date: ${futureDate}</p>
+                            <p>Price: ₹${futurePrice}</p>
+                        </div>
+                    `;
+        }
+      }
+    }
+
+    // Initial load
+    loadCharts();
+
+    // Refresh every 30 seconds
+    setInterval(loadCharts, 30000);
+  </script>
+</body>
+
+</html>
