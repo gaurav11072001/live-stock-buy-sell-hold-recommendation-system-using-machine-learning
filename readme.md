@@ -1,5 +1,9 @@
+![image](https://github.com/user-attachments/assets/df931f97-7ec9-431e-9ffd-5cced7e0737f)
+![image](https://github.com/user-attachments/assets/2ab42ca8-bba0-4ee9-98fd-521ca2fb1c8b)
+![image](https://github.com/user-attachments/assets/40f7ee65-86ac-4e07-989b-638927f0e1fd)
 
-3. Ensure you have the following model files in the correct location:
+
+ Ensure you have the following model files in the correct location:
    - `lstmlogreg_<symbol>_classifier.pkl`
    - `scaler_<symbol>.pkl`
    
